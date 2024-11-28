@@ -75,7 +75,7 @@ def main(cam):
     process1.join()
     process2.join()
 
-cam = './2024-10-14 17-06-21.mkv'
+cam = './2024-10-14 17-06-21.mkv' # ТУТ ПОСТАВИТЬ адрес до камеры
 
 #prompt_to_lama(initial_prompt)
 if __name__ == "__main__":

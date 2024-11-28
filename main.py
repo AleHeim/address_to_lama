@@ -12,7 +12,7 @@ from ultralytics import YOLO
 
 #initial_prompt = 'I will send you coordinates in the format (x, y), where the minimum value is 0 and the maximum is 1. You need to determine where the object is, on the left (x<0.4), on the right (x>0.6) or in the middle (0.4<x <0.6)'
 def prompt_to_lama(queue):
-    prompt = 'I will send you coordinates in the format (x, y), where the minimum value is 0 and the maximum is 1. You need to determine where the object is, on the left (x<0.4), on the right (x>0.6) or in the middle (0.4<x <0.6)'
+    prompt = 'I will send you list of coordinates of each robot in the format [(x, y),(x, y)], where the minimum value is 0 and the maximum is 1. You need to determine where is the each robot, on the left (x<0.4), on the right (x>0.6) or in the middle (0.4<x <0.6)'
     while True:
         if not queue.empty():
             prompt = queue.get()
@@ -44,7 +44,7 @@ def prompt_to_lama(queue):
         print(output)
 
 def cam_track(queue, device_id):
-    model = YOLO('yolo11s.pt')
+    model = YOLO('weights/best.pt')
     cap = cv2.VideoCapture(device_id)
     if not cap.isOpened():
         print(f"Failed to open device {device_id}")
@@ -57,9 +57,10 @@ def cam_track(queue, device_id):
             results = model.predict(frame, verbose=False)
             for r in results:
                   if len(r.boxes)>0:
+                    prompt = []
                     for box in r.boxes:
                             x, y = box.xywhn[0][0], box.xywhn[0][1]
-                            prompt = f'{x}, {y}'
+                            prompt.append(f'{x}, {y}')
                             #print(prompt)
                             queue.put(prompt)
 

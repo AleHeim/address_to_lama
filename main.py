@@ -10,38 +10,43 @@ from ultralytics import YOLO
 #	'charset': 'utf-8'
 #}
 
+def process_prompt(prompt):
+    print(prompt)
+    data = '{   "model": "llama3.2",   "prompt":"' + f'{prompt}' + '"  }'
+    responses = []
+
+    # Формат ('протокол://ip:port/путь', data=json данные) 
+    response = requests.post('http://172.17.0.3:11434/api/generate', data=data )
+
+    print(f'response STATUS CODE {response.status_code}')
+
+    # Обработка ответа
+    for line in response.iter_lines():
+        response_json = json.loads(line)
+        try:
+            responses.append(response_json["response"])
+        except:
+            pass
+            
+    output = ''
+
+    for word in responses:
+        output += word
+
+    # Перевод и вывод
+    #translator = Translator(from_lang="en", to_lang="ru")
+    #output = translator.translate(output)
+    print(output)
+
 #initial_prompt = 'I will send you coordinates in the format (x, y), where the minimum value is 0 and the maximum is 1. You need to determine where the object is, on the left (x<0.4), on the right (x>0.6) or in the middle (0.4<x <0.6)'
 def prompt_to_lama(queue):
     prompt = 'I will send you list of coordinates of each robot in the format [(x, y),(x, y)], where the minimum value is 0 and the maximum is 1. You need to determine where is the each robot, on the left (x<0.4), on the right (x>0.6) or in the middle (0.4<x <0.6)'
+    process_prompt(prompt)
     while True:
         if not queue.empty():
             prompt = queue.get()
-        print(prompt)
-        data = '{   "model": "llama3.2",   "prompt":"' + f'{prompt}' + '"  }'
-        responses = []
+            process_prompt(prompt)
 
-        # Формат ('протокол://ip:port/путь', data=json данные) 
-        response = requests.post('http://172.17.0.2:11434/api/generate', data=data )
-
-        print(f'response STATUS CODE {response.status_code}')
-
-        # Обработка ответа
-        for line in response.iter_lines():
-            response_json = json.loads(line)
-            try:
-                responses.append(response_json["response"])
-            except:
-                pass
-                
-        output = ''
-
-        for word in responses:
-            output += word
-
-        # Перевод и вывод
-        translator = Translator(from_lang="en", to_lang="ru")
-        output = translator.translate(output)
-        print(output)
 
 def cam_track(queue, device_id):
     model = YOLO('weights/best.pt')
@@ -75,7 +80,7 @@ def main(cam):
     process1.join()
     process2.join()
 
-cam = './2024-10-14 17-06-21.mkv' # ТУТ ПОСТАВИТЬ адрес до камеры
+cam = 'http://192.168.1.43:8081' # ТУТ ПОСТАВИТЬ адрес до камеры
 
 #prompt_to_lama(initial_prompt)
 if __name__ == "__main__":

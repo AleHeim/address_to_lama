@@ -40,7 +40,7 @@ def process_prompt(prompt):
 
 #initial_prompt = 'I will send you coordinates in the format (x, y), where the minimum value is 0 and the maximum is 1. You need to determine where the object is, on the left (x<0.4), on the right (x>0.6) or in the middle (0.4<x <0.6)'
 def prompt_to_lama(queue):
-    prompt = 'I will send you list of coordinates of each robot in the format [(x, y),(x, y)], where the minimum value is 0 and the maximum is 1. You need to determine where is the each robot, on the left (x<0.4), on the right (x>0.6) or in the middle (0.4<x <0.6)'
+    prompt = 'Imagine that you comment battle of car robots, I will send you where robots are and you should comment it'
     process_prompt(prompt)
     while True:
         if not queue.empty():
@@ -55,19 +55,26 @@ def cam_track(queue, device_id):
         print(f"Failed to open device {device_id}")
         return
     while cap.isOpened():
-            # robot_ids = { 1: [], 2: []}
-            ret, frame = cap.read()
-            if not ret:
-                break
-            results = model.predict(frame, verbose=False)
-            for r in results:
-                  if len(r.boxes)>0:
-                    prompt = []
-                    for box in r.boxes:
-                            x, y = box.xywhn[0][0], box.xywhn[0][1]
-                            prompt.append(f'{x}, {y}')
-                            #print(prompt)
-                            queue.put(prompt)
+        # robot_ids = { 1: [], 2: []}
+        ret, frame = cap.read()
+        if not ret:
+            break
+        results = model.predict(frame, verbose=False)
+        for r in results:
+            if len(r.boxes)>0:
+                prompt = []
+                for i, box in enumerate(r.boxes):
+                    x, y = box.xywhn[0][0], box.xywhn[0][1]
+                    if(x<0.4):
+                        loc = 'left'
+                    elif(x>0.6):
+                        loc = 'right'
+                    else:
+                        loc = 'middle'
+
+                    prompt.append(f'Robot: {i}; located: {loc}')
+                    #print(prompt)
+                    queue.put(prompt)
 
 def main(cam):
     queue = Queue()
